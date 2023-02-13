@@ -5,7 +5,8 @@ ble_client:
     id: bm2_battery_meter
 
 sensor:
-  - platform: ble_client
+  - platform: ble_client   
+    type: characteristic
     ble_client_id: bm2_battery_meter
     name: Voltage
     service_uuid: 'fff0'
