@@ -1,0 +1,23 @@
+[project]
+name = "bm2"
+version = "0.1.0"
+description = "Python connector for Bluetooth based Battery Monitors (BM2)"
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+requires-python = ">=3.8"
+keywords = ["ble", "bluetooth-low-energy", "voltage-monitor", "car-battery"]
+authors = [
+    { name = "Krystian Dużyński" },
+]
+
+dynamic = ["dependencies"]
+
+[tool.setuptools]
+package-dir = {"" = "bm2_python/src"}
+packages = ["bm2"]
+
+[project.urls]
+repository = "https://github.com/KrystianD/bm2-battery-monitor"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["bm2_python/requirements.txt"] }
