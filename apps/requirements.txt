@@ -1,0 +1,2 @@
+-r ../bm2_python/requirements.txt
+paho-mqtt~=1.6.1
