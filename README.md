@@ -7,11 +7,19 @@ Result of my reverse engineering work on Bluetooth-based car battery monitor.
 
 ## Content
 
-* `bm2_python` - Python client, with support of:
-  * Reading current voltage - `BM2Client.get_voltage()`
-  * Reading voltages history - `BM2Client.get_history()`
-* `bm2_esphome` - ESPHome template exposing current voltage
-* `apps` - Example applications (data viewer, history reader, mqtt sender)
+### `bm2_python` - Python client library
+
+Supports the following API calls:
+* Reading current voltage - `BM2Client.get_voltage()`
+* Reading voltages history - `BM2Client.get_history()`
+
+### `bm2_esphome` - ESPHome template exposing current voltage
+
+### `apps` - Example applications
+
+* `bm2_viewer.py` - data viewer
+* `bm2_history.py` - history reader
+* `bm2_mqtt.py` - mqtt sender
 
 ## Python library usage
 
