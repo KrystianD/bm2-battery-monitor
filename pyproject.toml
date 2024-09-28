@@ -14,7 +14,6 @@ dynamic = ["dependencies"]
 
 [tool.setuptools]
 package-dir = {"" = "bm2_python/src"}
-packages = ["bm2"]
 
 [project.urls]
 repository = "https://github.com/KrystianD/bm2-battery-monitor"

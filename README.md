@@ -13,11 +13,15 @@ Supports the following API calls:
 * Reading current voltage - `BM2Client.get_voltage()`
 * Reading voltages history - `BM2Client.get_history()`
 
+Support for the following transports is implemented:
+
+* `TransportBleak` - uses device's local Bluetooth radio (eg. USB or built-in, with use of [Bleak](https://bleak.readthedocs.io/en/latest/) library)
+
 ### `bm2_esphome` - ESPHome template exposing current voltage
 
 ### `apps` - Example applications
 
-* `bm2_viewer.py` - data viewer
+* `bm2_viewer_bleak.py` - data viewer using TransportBleak
 * `bm2_history.py` - history reader
 * `bm2_mqtt.py` - mqtt sender
 
@@ -27,10 +31,11 @@ Supports the following API calls:
 import asyncio
 
 from bm2.client import BM2Client
+from bm2.transports.TransportBleak import TransportBleak
 
 async def main():
-    bm2 = BM2Client("B0:B1:xx:xx:xx:xx")
-    bm2.start()
+    transport = await TransportBleak.connect("B0:B1:xx:xx:xx:xx")
+    bm2 = BM2Client(transport)
     
     # Read historical measurements
     history_readings = await bm2.get_history()
@@ -52,7 +57,7 @@ asyncio.run(main())
 Install dependencies from `apps/requirements.txt` - best in a virtualenv, then:
 
 ```shell
-python apps/bm2_viewer.py --bm2-addr B0:B1:xx:xx:xx:xx
+python apps/bm2_viewer_bleak.py --bm2-addr B0:B1:xx:xx:xx:xx
 
 python apps/bm2_history.py --bm2-addr B0:B1:xx:xx:xx:xx
 

@@ -1,2 +1,2 @@
 #!/bin/bash
-mypy -p bm2.client
+mypy -p bm2
