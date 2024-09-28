@@ -1,2 +1,3 @@
 bleak~=0.14.2
 pycryptodome
+aioesphomeapi~=23.2.0
