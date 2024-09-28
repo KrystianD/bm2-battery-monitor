@@ -3,22 +3,17 @@ import binascii
 import enum
 import logging
 import struct
-import subprocess
+import weakref
 from asyncio import Task
 from dataclasses import dataclass
 from datetime import timedelta, datetime
 from typing import List, Optional, Any
 
-from bleak import BleakClient
-import bleak.exc
-
 from bm2.bit_utils import decode_3bytes, decode_nibbles
 from bm2.encryption import encrypt, decrypt
+from bm2.transports.BaseTransport import BaseTransport
 
 logger = logging.getLogger("bm2_client")
-
-UUID_KEY_READ = "0000fff4-0000-1000-8000-00805f9b34fb"
-UUID_KEY_WRITE = "0000fff3-0000-1000-8000-00805f9b34fb"
 
 
 @dataclass
@@ -38,13 +33,11 @@ class PacketType(enum.Enum):
 
 
 class BM2Client:
-    def __init__(self, mac: str):
-        self._mac = mac
+    def __init__(self, transport: BaseTransport) -> None:
+        self._transport = transport
 
         self._stop = True
 
-        self._client: Optional[BleakClient] = None
-        self._connected_event = asyncio.Condition()
         self._mainloop_task: Optional[Task[Any]] = None
 
         self._request_sem = asyncio.Semaphore()
@@ -55,32 +48,14 @@ class BM2Client:
         self._history_data = b""
         self._future_history_readings: Optional[asyncio.Future[List[HistoryReading]]] = None
 
-    def start(self) -> None:
-        if self._client is not None:
-            return
-        self._stop = False
-        self._mainloop_task = asyncio.create_task(self._mainloop())
+        self_ref = weakref.WeakMethod(self._notification_handler)
+        self._transport.set_on_data_handler(lambda x: self_ref()(x))  # type: ignore
 
-    def stop(self) -> None:
-        self._stop = True
-        if self._client is not None:
-            asyncio.create_task(self._client.disconnect())
-        if self._mainloop_task is not None:
-            self._mainloop_task.cancel()
-        self._client = None
-
-    async def wait_for_connected(self) -> None:
-        if self._stop:
-            raise NotConnectedError()
-
-        async with self._connected_event:
-            await self._connected_event.wait_for(lambda: self._client is not None)
+    def close(self) -> None:
+        self._transport.close()
 
     async def get_history(self) -> List[HistoryReading]:
         async with self._request_sem:
-            if self._stop:
-                raise NotConnectedError()
-
             f = asyncio.Future[List[HistoryReading]]()
             self._future_history_readings = f
             await self._send([0xe7, 1])
@@ -88,55 +63,14 @@ class BM2Client:
 
     async def get_voltage(self) -> float:
         async with self._request_sem:
-            if self._stop:
-                raise NotConnectedError()
-
             f = asyncio.Future[float]()
             self._future_voltage_reading = f
-            return await asyncio.wait_for(f, 60)
+            return await asyncio.wait_for(f, 5)
 
     async def _send(self, data: List[int]) -> None:
-        await self.wait_for_connected()
+        await self._transport.write(encrypt(bytes(data)))
 
-        assert self._client is not None
-
-        await self._client.write_gatt_char(UUID_KEY_WRITE, encrypt(bytes(data)))
-
-    async def _mainloop(self) -> None:
-        while not self._stop:
-            try:
-                async with BleakClient(self._mac) as client:
-                    logger.info(f"Connected")
-
-                    await client.start_notify(UUID_KEY_READ, self._notification_handler)
-                    self._client = client
-
-                    while True:
-                        if not client.is_connected:
-                            break
-
-                        async with self._connected_event:
-                            self._connected_event.notify_all()
-
-                        await asyncio.sleep(1)
-
-            except bleak.exc.BleakError as e:
-                if "was not found" in e.args[0]:
-                    logger.info("Performing forceful device disconnection")
-                    subprocess.run("bluetoothctl", input=f"disconnect {self._mac}".encode("ascii"), stdout=subprocess.DEVNULL)
-                elif "org.freedesktop.DBus.Error.NoReply" in e.args[0]:
-                    pass
-                else:
-                    logger.error(e)
-            except OSError as e:
-                logger.error(e)
-            finally:
-                self._client = None
-                self._fulfill_history_reading_future(exception=NotConnectedError())
-
-                await asyncio.sleep(1)
-
-    def _notification_handler(self, _: Any, encrypted_data: bytearray) -> None:
+    def _notification_handler(self, encrypted_data: bytes) -> None:
         decrypted_data = decrypt(encrypted_data)
 
         def is_of_type(packet_type: PacketType) -> bool:

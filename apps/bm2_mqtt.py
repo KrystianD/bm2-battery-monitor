@@ -5,6 +5,7 @@ import logging
 from paho.mqtt.publish import single
 
 from bm2.client import BM2Client
+from bm2.transports.TransportBleak import TransportBleak
 
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
@@ -21,8 +22,8 @@ async def main():
     mqtt_port = args.mqtt_port
     mqtt_hostname = args.mqtt_host
 
-    bm2 = BM2Client(args.bm2_addr)
-    bm2.start()
+    transport = await TransportBleak.connect(args.bm2_addr)
+    bm2 = BM2Client(transport)
 
     while True:
         voltage = await bm2.get_voltage()
