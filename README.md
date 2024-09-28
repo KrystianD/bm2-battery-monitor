@@ -16,6 +16,7 @@ Supports the following API calls:
 Support for the following transports is implemented:
 
 * `TransportBleak` - uses device's local Bluetooth radio (eg. USB or built-in, with use of [Bleak](https://bleak.readthedocs.io/en/latest/) library)
+* `TransportESPHomeBluetoothProxy` - uses an ESP32 device flashed with [ESPHome](https://esphome.io/index.html) firmware with [Bluetooth Proxy](https://esphome.io/components/bluetooth_proxy.html?highlight=bluetooth+proxy) feature enabled
 
 ### `bm2_esphome` - ESPHome template exposing current voltage
 
@@ -35,6 +36,8 @@ from bm2.transports.TransportBleak import TransportBleak
 
 async def main():
     transport = await TransportBleak.connect("B0:B1:xx:xx:xx:xx")
+    # or
+    # transport = await TransportESPHomeBluetoothProxy.connect("192.168.1.123", 6053, "", "B0:B1:xx:xx:xx:xx")
     bm2 = BM2Client(transport)
     
     # Read historical measurements

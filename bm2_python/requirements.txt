@@ -1,2 +1,3 @@
 bleak~=0.14.2
 pycrypto~=2.6.1
+aioesphomeapi~=23.2.0
