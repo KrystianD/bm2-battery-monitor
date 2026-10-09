@@ -21,4 +21,4 @@ def encrypt(data: bytes) -> bytes:
 
 
 def decrypt(encrypted_data: Union[bytes, bytearray]) -> bytes:
-    return cast(bytes, create_aes().decrypt(bytes(encrypted_data)))
+    return cast(bytes, b''.join(create_aes().decrypt(bytes(encrypted_data[i:i + AesBlockSize])) for i in range(0, len(encrypted_data), AesBlockSize)))

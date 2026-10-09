@@ -1,2 +1,2 @@
 bleak~=0.14.2
-pycrypto~=2.6.1
+pycryptodome
